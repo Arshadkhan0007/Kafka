@@ -20,7 +20,6 @@ public class KafkaService {
     // @KafkaListener(
     //      topics = "practice-topic-1",
     //      groupId = "practice-group-1",
-    //
     //      topicPartitions = {@TopicPartition(topic = "practice-topic-1", partition = {"2})}
     // )
 
