@@ -67,7 +67,7 @@ public class KafkaProducerConfig {
 
         // 6. MAX IN-FLIGHT REQUESTS: "How many unacknowledged messages can be in the air at the same time?"
         // We set this to 5. It allows Kafka to send up to 5 messages over the network at once without waiting for their receipts, which speeds things up.
-        // (Note: Kafka guarantees that using 5 or less keeps your messages in the exact order you sent them when idempotence is true).
+        // (Note: Kafka guarantees that using 5 or fewer keeps your messages in the exact order you sent them when idempotence is true).
         props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
 
         return new DefaultKafkaProducerFactory<>(props);

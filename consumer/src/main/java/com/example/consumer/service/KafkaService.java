@@ -14,15 +14,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class KafkaService {
 
-    private String message;
-
-    // If you want to read from a particular partition
-    // @KafkaListener(
-    //      topics = "practice-topic-1",
-    //      groupId = "practice-group-1",
-    //      topicPartitions = {@TopicPartition(topic = "practice-topic-1", partition = {"2})}
-    // )
-
+    // @RetryableTopic creates multiple retry topics + a DLT automatically.
+    // Retry topics are usually named with index-based suffixes like: practice-topic-retry-0, practice-topic-retry-1, ...
+    // and the DLT will be: practice-topic-dlt.
     @RetryableTopic(
             attempts = "4",
 //            exclude = {NullPointerException.class},
@@ -30,14 +24,19 @@ public class KafkaService {
     )
     @KafkaListener(topics = "practice-topic", groupId = "practice-group-1")
     public void getMessage1(Course course) {
-        message = course.toString();
+        String message = course.toString();
         if(course.getCourseId().equals("COURSE-101")) throw new RuntimeException("Invalid course ID");
         log.info("Received data on consumer-1 : {}", message);
     }
 
+    // @DltHandler is linked to the nearest @RetryableTopic + @KafkaListener
     @DltHandler
     public void listenDLT(Course course, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, @Header(KafkaHeaders.OFFSET) long offset) {
         log.info("DLT Received : {}, from {}, offset {}", course.toString(), topic, offset);
+        // You can:
+        // 1. Store in DB
+        // 2. Send alert/email
+        // 3. Trigger manual retry later
     }
 
 }

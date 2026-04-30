@@ -24,7 +24,7 @@ public class KafkaConfiguration {
     public ConsumerFactory<String, Course> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "practice-topic");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "practice-group");
 
         // 1. Set up the JsonDeserializer
         JsonDeserializer<Course> jsonDeserializer = new JsonDeserializer<>(Course.class);
