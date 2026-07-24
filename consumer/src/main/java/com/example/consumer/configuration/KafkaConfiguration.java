@@ -23,21 +23,46 @@ public class KafkaConfiguration {
     @Bean
     public ConsumerFactory<String, Course> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
+
+        // Address of the Kafka broker that this consumer will connect to.
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+
+        // Consumer Group ID.
+        // Consumers with the same group ID share the work (partitions).
+        // Kafka also stores offsets separately for each group.
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "practice-group");
 
         // 1. Set up the JsonDeserializer
+        // Kafka stores messages as byte[].
+        // JsonDeserializer converts the JSON payload into a Course object.
         JsonDeserializer<Course> jsonDeserializer = new JsonDeserializer<>(Course.class);
-        jsonDeserializer.addTrustedPackages("com.example.producer.model");
+        jsonDeserializer.addTrustedPackages("com.example.producer.model"); // Spring Kafka only deserializes classes from trusted packages for security reasons.
 
-        // 2. Fix ClassNotFoundException:
-        // By default, Kafka sends the full class path in the header (e.g., "com.example.producer.model.Course").
-        // If your consumer project has a different package structure, it will crash.
-        // This mapping tells Kafka: "If you see the producer's class path, map it to my local Course class."
+        // -------------------------------------------------------------
+        // STEP 2: Handling ClassNotFoundException
+        // -------------------------------------------------------------
+        // By default, Spring Kafka adds a "__TypeId__" header
+        // containing the producer's full class name.
+        //
+        // Example:
+        // Producer package:
+        //     com.example.producer.model.Course
+        //
+        // Consumer package:
+        //     com.example.consumer.model.Course
+        //
+        // Without this mapping, the consumer tries:
+        // Class.forName("com.example.producer.model.Course")
+        //
+        // Since that class doesn't exist in this project,
+        // it throws ClassNotFoundException.
         DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
         Map<String, Class<?>> idClassMapping = new HashMap<>();
+        // Maps the producer's class name to the local Course class.
         idClassMapping.put("com.example.producer.model.Course", Course.class);
+        // Register the mapping with the type mapper.
         typeMapper.setIdClassMapping(idClassMapping);
+        // Tell the JsonDeserializer to use our custom type mapper.
         jsonDeserializer.setTypeMapper(typeMapper);
 
         // 3. Wrap in ErrorHandlingDeserializer to prevent IllegalStateException
@@ -46,6 +71,14 @@ public class KafkaConfiguration {
         ErrorHandlingDeserializer<Course> errorHandlingValueDeserializer =
                 new ErrorHandlingDeserializer<>(jsonDeserializer);
 
+        // Key Deserializer:
+        // Converts Kafka message key (byte[]) -> String
+        //
+        // Value Deserializer:
+        // Converts Kafka message value (JSON byte[])
+        //      -> ErrorHandlingDeserializer
+        //          -> JsonDeserializer
+        //              -> Course object
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), errorHandlingValueDeserializer);
     }
 
