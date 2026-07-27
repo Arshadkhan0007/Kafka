@@ -28,6 +28,7 @@ public class KafkaProducerConfig {
     @Bean
     public NewTopic createTopic() {
         // Parameters: (Topic Name, Number of Partitions, Replication Factor)
+        // Make sure you are running sufficient for the 'Replication Factor' config to work
         return new NewTopic(topicName, 5, (short) 2);
     }
 
